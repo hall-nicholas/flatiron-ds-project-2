@@ -6,13 +6,20 @@ import numpy as np
 def import_and_clean_data(filepath):
     df = pd.read_csv(filepath).dropna()
     
+    # Removes the other 35 (!) represented states
+    df['state'] = df.address.apply(lambda x: x[nfind(x, ',', -2) + 2:x.rfind(',') - 6])
+    df = df[df['state'] == 'Washington'] 
+
     # Cleaning
+    highquant_price = df['price'].quantile(0.99)
     highquant_living = df['sqft_living'].quantile(0.99)
     highquant_lot = df['sqft_lot'].quantile(0.99)
     highquant_basement = df['sqft_basement'].quantile(0.99)
     highquant_patio = df['sqft_patio'].quantile(0.99)
     highquant_garage = df['sqft_garage'].quantile(0.99)
     
+    df = df[df['price'] < highquant_price]
+
     df = df[df['sqft_living'] < highquant_living]
     df = df[df['sqft_living'] > 100] # Gets rid of abnormally low sqfts
     
@@ -29,6 +36,8 @@ def import_and_clean_data(filepath):
 
     df['bath_to_bed'] = df['bathrooms'] / df['bedrooms']
     df = df.replace([np.inf, -np.inf], df['bath_to_bed'].median()).fillna(df['bath_to_bed'].median()) # Replaces inf/-inf/nan values with median
+
+    df['zip'] = df.address.apply(lambda x: x[x.rfind(',') - 5:x.rfind(',')])
     
     df['condition'] = df['condition'].replace({'Poor': 1, 
                                                'Fair': 2, 
@@ -51,3 +60,15 @@ def import_and_clean_data(filepath):
                                       })
     
     return df
+
+def nfind(str, c, n):
+  if n >= 0:
+    idx = -1
+    for i in range(n):
+      idx = str.find(c, idx + 1)
+    return idx
+  idx = str.rfind(c)
+  for i in range(-n - 1):
+    str = str[:idx]
+    idx = str.rfind(c)
+  return idx
