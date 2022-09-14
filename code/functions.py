@@ -1,5 +1,6 @@
 # -- Imports --
 import pandas as pd
+import numpy as np
 
 # Import and clean data
 def import_and_clean_data(filepath):
@@ -25,6 +26,9 @@ def import_and_clean_data(filepath):
     
     # Feature engineering
     df['age'] = 2021 - df['yr_built']
+
+    df['bath_to_bed'] = df['bathrooms'] / df['bedrooms']
+    df = df.replace([np.inf, -np.inf], df['bath_to_bed'].median()).fillna(df['bath_to_bed'].median()) # Replaces inf/-inf/nan values with median
     
     df['condition'] = df['condition'].replace({'Poor': 1, 
                                                'Fair': 2, 
