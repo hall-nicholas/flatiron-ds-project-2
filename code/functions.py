@@ -6,6 +6,11 @@ import numpy as np
 def import_and_clean_data(filepath):
     df = pd.read_csv(filepath).dropna()
     
+    # Feature engineering
+    df['age'] = 2021 - df['yr_built']
+
+    df = df[df['age'] > 49]
+
     # Removes the other 35 (!) represented states
     df['state'] = df.address.apply(lambda x: x[nfind(x, ',', -2) + 2:x.rfind(',') - 6])
     df = df[df['state'] == 'Washington'] 
@@ -31,8 +36,7 @@ def import_and_clean_data(filepath):
     
     df = df[df['sqft_garage'] < highquant_garage]
     
-    # Feature engineering
-    df['age'] = 2021 - df['yr_built']
+    # Additional feature engineering
 
     df['bath_to_bed'] = df['bathrooms'] / df['bedrooms']
     df = df.replace([np.inf, -np.inf], df['bath_to_bed'].median()).fillna(df['bath_to_bed'].median()) # Replaces inf/-inf/nan values with median
