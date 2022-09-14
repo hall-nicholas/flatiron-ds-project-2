@@ -29,6 +29,8 @@ def import_and_clean_data(filepath):
 
     df['bath_to_bed'] = df['bathrooms'] / df['bedrooms']
     df = df.replace([np.inf, -np.inf], df['bath_to_bed'].median()).fillna(df['bath_to_bed'].median()) # Replaces inf/-inf/nan values with median
+
+    df['zip'] = df.address.apply(lambda x: x[x.rfind(',') - 5:x.rfind(',')])
     
     df['condition'] = df['condition'].replace({'Poor': 1, 
                                                'Fair': 2, 
