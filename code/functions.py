@@ -4,11 +4,14 @@ import numpy as np
 
 # Import and clean data
 def import_and_clean_data(filepath):
+    
+    # Remove small number of missing entries
     df = pd.read_csv(filepath).dropna()
     
     # Feature engineering
     df['age'] = 2021 - df['yr_built']
-
+    
+    # Filter dataset by historic homes (50 years or older to qualify)
     df = df[df['age'] > 49]
 
     # Removes the other 35 (!) represented states
@@ -16,6 +19,7 @@ def import_and_clean_data(filepath):
     df = df[df['state'] == 'Washington'] 
 
     # Cleaning
+    # Create outlier thresholds for extremely right-skewed columns
     highquant_price = df['price'].quantile(0.99)
     highquant_living = df['sqft_living'].quantile(0.99)
     highquant_lot = df['sqft_lot'].quantile(0.99)
@@ -23,10 +27,11 @@ def import_and_clean_data(filepath):
     highquant_patio = df['sqft_patio'].quantile(0.99)
     highquant_garage = df['sqft_garage'].quantile(0.99)
     
+    # Removing outliers according to threshold established above
     df = df[df['price'] < highquant_price]
 
     df = df[df['sqft_living'] < highquant_living]
-    df = df[df['sqft_living'] > 100] # Gets rid of abnormally low sqfts
+    df = df[df['sqft_living'] > 100] # Gets rid of abnormally low sqfts, possible mistaken entry
     
     df = df[df['sqft_lot'] < highquant_lot]
     
@@ -37,17 +42,21 @@ def import_and_clean_data(filepath):
     df = df[df['sqft_garage'] < highquant_garage]
     
     # Additional feature engineering
-
+    # Bathroom to bedroom ratio 
     df['bath_to_bed'] = df['bathrooms'] / df['bedrooms']
-    df = df.replace([np.inf, -np.inf], df['bath_to_bed'].median()).fillna(df['bath_to_bed'].median()) # Replaces inf/-inf/nan values with median
+    
+    # Replaces inf/-inf/nan values with median
+    df = df.replace([np.inf, -np.inf], df['bath_to_bed'].median()).fillna(df['bath_to_bed'].median()) 
 
     df['zip'] = df.address.apply(lambda x: x[x.rfind(',') - 5:x.rfind(',')])
     
+    # Replace string values for condition feature with numeric
     df['condition'] = df['condition'].replace({'Poor': 1, 
                                                'Fair': 2, 
                                                'Average': 3, 
                                                'Good': 4, 
                                                'Very Good': 5})
+    # Same with grade feature
     df['grade'] = df['grade'].replace({'1 Cabin': 1, 
                                        '2 Substandard': 2, 
                                        '3 Poor': 3, 
